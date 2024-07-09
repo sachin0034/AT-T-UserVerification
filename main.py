@@ -27,14 +27,12 @@ def load_dataset(file_path):
 
 dataset = load_dataset('dataset.jsonl')
 
-# Function to load customer data from an uploaded CSV file
+# Function to load customer data from the CSV file in the code base
 @st.cache_data
-def load_customer_data(uploaded_file):
-    if uploaded_file is not None:
-        logging.debug(f"Loading customer data from {uploaded_file.name}")
-        return pd.read_csv(uploaded_file)
-    logging.debug("No file uploaded")
-    return None
+def load_customer_data():
+    file_path = 'userdata.csv'  # Update with the correct path
+    logging.debug(f"Loading customer data from {file_path}")
+    return pd.read_csv(file_path)
 
 # Improved normalize phone number function
 def normalize_phone_number(phone_number):
@@ -108,7 +106,7 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
             "firstMessage": "Hello! Welcome to Flexpert customer support. How may I assist you today?" if is_inbound else "Hello! Welcome to Flexpert customer support. To assist you better, could you please provide your 10-digit phone number?",
             "model": {
                 "provider": "openai",
-                "model": "gpt-4-turbo",
+                "model": "gpt-3.5-turbo",
                 "messages": [
                     {
                         "role": "system",
@@ -196,11 +194,11 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
 # Streamlit App configuration
 st.title('Call Dashboard')
 st.sidebar.title('Navigation')
-options = ['Single Call', 'Inbound Call Simulation']
+options = ['Single Call']
 choice = st.sidebar.selectbox('Select a section', options)
 
-uploaded_file = st.sidebar.file_uploader("Upload CSV", type=['csv'])
-customer_data = load_customer_data(uploaded_file)
+# Load the customer data from the CSV file in the code base
+customer_data = load_customer_data()
 
 if choice == 'Single Call':
     st.header('Single Call (Outbound)')
@@ -211,6 +209,7 @@ if choice == 'Single Call':
     if st.button('Make Call'):
         logging.debug(f"Button clicked with phone number: {phone_number} and question: {question}")
         message, response = handle_call(phone_number, customer_data, question, is_inbound=False)
+        st.write(message)
         st.write(message)
         st.json(response)
 
@@ -225,3 +224,5 @@ elif choice == 'Inbound Call Simulation':
         message, response = handle_call(phone_number, customer_data, question, is_inbound=True)
         st.write(message)
         st.json(response)
+
+       

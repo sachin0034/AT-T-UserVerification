@@ -71,7 +71,7 @@ def search_answer(question, dataset, user_data=None):
     
     # Check for predefined bot response
     if "who built you" in question.lower() or "who made you" in question.lower():
-        return "I was built by TechAvtar."
+        return "I was built by Skyovi."
 
     # Search in user data
     if user_data:
@@ -98,22 +98,22 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
     }
 
     system_prompt = """
-    You are the customer support at AT&T. Follow these steps:
+    You are the customer support at A B & C. Follow these steps:
     1. For outbound calls, ask the caller for their phone number at the start of the call.
     2. For inbound calls, use the provided phone number to retrieve customer details.
     3. Accept the phone number as provided by the user, without adding any country code.
     4. Use the provided phone number to retrieve customer details from our records.
-    5. If a match is found, use this information to assist the caller.
+    5. If a match is found, use the respective  information to assist the caller.
     6. If no match is found, use the default customer data (for number 9999999999) to assist the caller.
     7. Answer questions using the customer's data when available, or use general knowledge if necessary.
     8. If the user corrects you, acknowledge the correction and update your understanding.
     9. Do not prepend '91' to phone numbers unless explicitly stated by the user.
-    10. If asked who built you, reply that TechAvtar built you.
+    10. If asked who built you, reply that Skyovi built you.
     """
 
     data = {
         'assistant': {
-            "firstMessage": "Hello! Welcome to AT&T customer support. How may I assist you today?" if is_inbound else "Hello! Welcome to AT&T customer support. To assist you better, could you please provide your 10-digit phone number?",
+            "firstMessage": "Hello, this is jennie , customer support from a b and c. let me know how can we help you." if is_inbound else "Hello, this is jennie , customer support from a b and c. let me know how can we help you.",
             "model": {
                 "provider": "openai",
                 "model": "gpt-3.5-turbo",
@@ -201,7 +201,7 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
 # Streamlit App configuration
 st.title('Call Dashboard')
 st.sidebar.title('Navigation')
-options = ['Single Call', 'Inbound Call Simulation']
+options = ['Single Call']
 choice = st.sidebar.selectbox('Select a section', options)
 
 # Load the customer data from the CSV file in the code base
@@ -217,16 +217,16 @@ if choice == 'Single Call':
         logging.debug(f"Button clicked with phone number: {phone_number} and question: {question}")
         message, response = handle_call(phone_number, customer_data, question, is_inbound=False)
         st.write(message)
-        st.json(response)
+        # st.json(response)
 
-elif choice == 'Inbound Call Simulation':
-    st.header('Inbound Call Simulation')
+# elif choice == 'Inbound Call Simulation':
+#     st.header('Inbound Call Simulation')
     
-    phone_number = st.text_input('Enter incoming phone number (10 digits, no country code)')
-    question = st.text_area('Enter caller\'s question')
+#     phone_number = st.text_input('Enter incoming phone number (10 digits, no country code)')
+#     question = st.text_area('Enter caller\'s question')
 
-    if st.button('Simulate Inbound Call'):
-        logging.debug(f"Inbound call simulation with phone number: {phone_number} and question: {question}")
-        message, response = handle_call(phone_number, customer_data, question, is_inbound=True)
-        st.write(message)
-        st.json(response)
+#     if st.button('Simulate Inbound Call'):
+#         logging.debug(f"Inbound call simulation with phone number: {phone_number} and question: {question}")
+#         message, response = handle_call(phone_number, customer_data, question, is_inbound=True)
+#         st.write(message)
+#         st.json(response)

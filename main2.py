@@ -16,6 +16,7 @@ load_dotenv()
 auth_token = os.getenv('AUTH_TOKEN')
 phone_number_id = os.getenv('PHONE_NUMBER_ID')
 openApi = os.getenv('OPENAI_API_KEY')
+
 # Load the dataset.jsonl file
 def load_dataset(file_path):
     data = []
@@ -29,15 +30,15 @@ dataset = load_dataset('dataset.jsonl')
 # Function to load customer data from the CSV file in the code base
 @st.cache_data
 def load_customer_data():
-    file_path = 'CallerDataReal.csv'  # Update with the correct path
+    file_path = 'userdata.csv'  # Update with the correct path
     logging.debug(f"Loading customer data from {file_path}")
     return pd.read_csv(file_path)
 
 # Improved normalize phone number function
 def normalize_phone_number(phone_number):
     normalized = re.sub(r'\D', '', str(phone_number))
-    if normalized.startswith('1') and len(normalized) > 10:
-        normalized = normalized[1:]
+    if normalized.startswith('91') and len(normalized) > 10:
+        normalized = normalized[2:]
     if len(normalized) == 10:
         logging.debug(f"Normalized phone number: {normalized}")
         return normalized
@@ -106,7 +107,7 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
     6. If no match is found, use the default customer data (for number 9999999999) to assist the caller.
     7. Answer questions using the customer's data when available, or use general knowledge if necessary.
     8. If the user corrects you, acknowledge the correction and update your understanding.
-    9. Do not prepend '1' to phone numbers unless explicitly stated by the user.
+    9. Do not prepend '91' to phone numbers unless explicitly stated by the user.
     10. If asked who built you, reply that Skyovi built you.
     """
 
@@ -123,7 +124,7 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
                     },
                     {
                         "role": "assistant",
-                        "content": "Hello! Welcome to AB&C customer support. How may I assist you today?" if is_inbound else "Hello! Welcome to AB&C customer support. To assist you better, could you please provide your 10-digit phone number?"
+                        "content": "Hello! Welcome to AT&T customer support. How may I assist you today?" if is_inbound else "Hello! Welcome to AT&T customer support. To assist you better, could you please provide your 10-digit phone number?"
                     }
                 ]
             },

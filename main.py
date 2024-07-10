@@ -68,17 +68,26 @@ def get_customer_data_by_phone(phone_number, customer_data):
 
 def search_answer(question, dataset, user_data=None):
     logging.debug(f"Searching answer for question: {question}")
+    
+    # Check for predefined bot response
+    if "who built you" in question.lower() or "who made you" in question.lower():
+        return "I was built by TechAvtar."
+
+    # Search in user data
     if user_data:
         logging.debug("Searching answer with user data")
         for key, value in user_data.items():
             if key.lower() in question.lower():
                 return f"Your {key} is {value}."
 
+    # Search in dataset
     logging.debug("Searching answer in dataset.jsonl")
     for entry in dataset:
         if entry['messages'][0]['content'].lower() in question.lower():
             return entry['messages'][1]['content']
-    return None
+
+    # If no match found
+    return "I cannot provide information regarding that. Please rephrase your question or ask something else."
 
 def handle_call(phone_number, customer_data, question, is_inbound=False):
     logging.debug(f"Handling {'inbound' if is_inbound else 'outbound'} call with phone number: {phone_number} and question: {question}")
@@ -89,7 +98,7 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
     }
 
     system_prompt = """
-    You are the customer support at Flexpert. Follow these steps:
+    You are the customer support at AT&T. Follow these steps:
     1. For outbound calls, ask the caller for their phone number at the start of the call.
     2. For inbound calls, use the provided phone number to retrieve customer details.
     3. Accept the phone number as provided by the user, without adding any country code.
@@ -99,11 +108,12 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
     7. Answer questions using the customer's data when available, or use general knowledge if necessary.
     8. If the user corrects you, acknowledge the correction and update your understanding.
     9. Do not prepend '91' to phone numbers unless explicitly stated by the user.
+    10. If asked who built you, reply that TechAvtar built you.
     """
 
     data = {
         'assistant': {
-            "firstMessage": "Hello! Welcome to Flexpert customer support. How may I assist you today?" if is_inbound else "Hello! Welcome to Flexpert customer support. To assist you better, could you please provide your 10-digit phone number?",
+            "firstMessage": "Hello! Welcome to AT&T customer support. How may I assist you today?" if is_inbound else "Hello! Welcome to AT&T customer support. To assist you better, could you please provide your 10-digit phone number?",
             "model": {
                 "provider": "openai",
                 "model": "gpt-3.5-turbo",
@@ -114,7 +124,7 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
                     },
                     {
                         "role": "assistant",
-                        "content": "Hello! Welcome to Flexpert customer support. How may I assist you today?" if is_inbound else "Hello! Welcome to Flexpert customer support. To assist you better, could you please provide your 10-digit phone number?"
+                        "content": "Hello! Welcome to AT&T customer support. How may I assist you today?" if is_inbound else "Hello! Welcome to AT&T customer support. To assist you better, could you please provide your 10-digit phone number?"
                     }
                 ]
             },
@@ -135,31 +145,28 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
                 "role": "system",
                 "content": f"Using default customer information: {json.dumps(user_data)}. The user's actual number was not found in our records."
             })
-            if not is_inbound:
-                data['assistant']['model']['messages'].append({
-                    "role": "assistant",
-                    "content": f"Thank you for providing your phone number. I couldn't find your specific information, but I can still assist you with general inquiries. How may I help you today?"
-                })
+            data['assistant']['model']['messages'].append({
+                "role": "assistant",
+                "content": "Thank you for providing your phone number. I couldn't find your specific information, but I can still assist you with general inquiries. How may I help you today?"
+            })
         else:
             data['assistant']['model']['messages'].append({
                 "role": "system",
                 "content": f"Customer information found: {json.dumps(user_data)}. Use this information to answer the user's questions."
             })
-            if not is_inbound:
-                data['assistant']['model']['messages'].append({
-                    "role": "assistant",
-                    "content": f"Thank you for providing your phone number. I've found your information in our system. How may I assist you today?"
-                })
+            data['assistant']['model']['messages'].append({
+                "role": "assistant",
+                "content": "Thank you for providing your phone number. I've found your information in our system. How may I assist you today?"
+            })
     else:
         data['assistant']['model']['messages'].append({
             "role": "system",
             "content": "No customer information found, including the default. Proceed with general assistance."
         })
-        if not is_inbound:
-            data['assistant']['model']['messages'].append({
-                "role": "assistant",
-                "content": "Thank you for providing your phone number. I'm having trouble accessing customer information at the moment, but I'll do my best to assist you. How may I help you today?"
-            })
+        data['assistant']['model']['messages'].append({
+            "role": "assistant",
+            "content": "Thank you for providing your phone number. I'm having trouble accessing customer information at the moment, but I'll do my best to assist you. How may I help you today?"
+        })
 
     # Add the user's question
     data['assistant']['model']['messages'].append({
@@ -177,7 +184,7 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
     else:
         data['assistant']['model']['messages'].append({
             "role": "assistant",
-            "content": "I'm sorry, I couldn't find a specific answer to your question. How else may I assist you?"
+            "content": "I cannot provide information regarding that. Please rephrase your question or ask something else."
         })
 
     try:
@@ -194,7 +201,7 @@ def handle_call(phone_number, customer_data, question, is_inbound=False):
 # Streamlit App configuration
 st.title('Call Dashboard')
 st.sidebar.title('Navigation')
-options = ['Single Call']
+options = ['Single Call', 'Inbound Call Simulation']
 choice = st.sidebar.selectbox('Select a section', options)
 
 # Load the customer data from the CSV file in the code base
@@ -210,7 +217,6 @@ if choice == 'Single Call':
         logging.debug(f"Button clicked with phone number: {phone_number} and question: {question}")
         message, response = handle_call(phone_number, customer_data, question, is_inbound=False)
         st.write(message)
-        st.write(message)
         st.json(response)
 
 elif choice == 'Inbound Call Simulation':
@@ -224,5 +230,3 @@ elif choice == 'Inbound Call Simulation':
         message, response = handle_call(phone_number, customer_data, question, is_inbound=True)
         st.write(message)
         st.json(response)
-
-       
